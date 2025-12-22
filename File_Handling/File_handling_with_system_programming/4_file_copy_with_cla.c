@@ -1,34 +1,42 @@
 #include<stdio.h>
-#include<string.h>
-#include<unistd.h>
 #include<fcntl.h>
+#include<unistd.h>
 
-int main()
+#define BUFFER_SIZE 1024
+int main(int argc, char* argv[])
 {
 	char err[] = "\nCant Open Source File\n";
-	char ent[] = "\nEnter strings:\n";
-	char szText[1024];
+	char succ[] = "\nCopied Successfully\n";
 	int bytes_read;
+	char buffer[BUFFER_SIZE];	
 	
-	int fd1 = open("keyboard_to_file.txt",O_WRONLY|O_CREAT|O_TRUNC);
-	
-	if(-1 == fd1)
+	int fd1 = open(argv[1],O_RDONLY);
+	if(fd1 == -1)
 	{
 		write(STDOUT_FILENO, err, sizeof(err));
 		return -1;
 	}
 	
-	 write(STDOUT_FILENO, ent, sizeof(ent));
-	 while((bytes_read = read(STDIN_FILENO, szText, sizeof(szText))) > 0)
-    {
-        // Stop on empty line
-        if(bytes_read == 1 && szText[0] == '\n')
-            break;
-            
-        if(write(fd1, szText, bytes_read) != bytes_read)
-            break;  // write error
-    }
-    
-    close(fd1);
+	int fd2 = open(argv[2],O_WRONLY|O_CREAT|O_TRUNC);
+	if(fd2 == -1)
+	{
+		write(STDOUT_FILENO, err, sizeof(err));
+		close(fd1);
+		return -1;
+	}
+	
+	while(1)
+	{
+		bytes_read = read(fd1,buffer,BUFFER_SIZE);
+		
+		if(bytes_read == 0)
+			break;
+		write(fd2, buffer, bytes_read);
+	}
+	
+	close(fd1);
+	close(fd2);
+	
+	write(STDOUT_FILENO, succ, sizeof(succ));
 	return 0;
 }
